@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QoyodZohoConverter.Core", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QoyodZohoConverter.Core.Tests", "QoyodZohoConverter.Core.Tests\QoyodZohoConverter.Core.Tests.csproj", "{56AAAA3F-D34A-4870-98F9-3A4BF4038496}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QoyodZohoConverter.Runner", "QoyodZohoConverter.Runner\QoyodZohoConverter.Runner.csproj", "{27F391A8-C684-4007-88B3-349E509065A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{56AAAA3F-D34A-4870-98F9-3A4BF4038496}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56AAAA3F-D34A-4870-98F9-3A4BF4038496}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56AAAA3F-D34A-4870-98F9-3A4BF4038496}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27F391A8-C684-4007-88B3-349E509065A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27F391A8-C684-4007-88B3-349E509065A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27F391A8-C684-4007-88B3-349E509065A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27F391A8-C684-4007-88B3-349E509065A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

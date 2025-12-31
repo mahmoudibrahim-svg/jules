@@ -3,6 +3,7 @@ using QoyodZohoConverter.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace QoyodZohoConverter.Core.Services
 {
@@ -30,18 +31,20 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 4;
+                var headerRow = FindHeaderRow(worksheet, new[] { "الرمز", "اسم الحساب", "نوعه" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
                     accounts.Add(new QoyodAccount
                     {
-                        AccountCode = worksheet.Cells[row, 1].Text,
-                        AccountName = worksheet.Cells[row, 2].Text,
-                        AccountType = worksheet.Cells[row, 3].Text,
-                        Description = worksheet.Cells[row, 4].Text,
-                        ParentAccountCode = ParseParentCode(worksheet.Cells[row, 5].Text),
-                        IsPayableReceivable = worksheet.Cells[row, 6].Text.Equals("Yes", StringComparison.OrdinalIgnoreCase)
+                        AccountCode = worksheet.Cells[row, columns["الرمز"]].Text,
+                        AccountName = worksheet.Cells[row, columns["اسم الحساب"]].Text,
+                        AccountType = worksheet.Cells[row, columns["نوعه"]].Text,
+                        Description = worksheet.Cells[row, columns["الوصف"]].Text,
+                        ParentAccountCode = ParseParentCode(worksheet.Cells[row, columns["الحساب الرئيسي"]].Text),
+                        IsPayableReceivable = (worksheet.Cells[row, columns["حساب مدين/دائن"]].Text ?? "").Equals("نعم", StringComparison.OrdinalIgnoreCase)
                     });
                 }
             }
@@ -70,21 +73,23 @@ namespace QoyodZohoConverter.Core.Services
                 using (var package = new ExcelPackage(fileInfo))
                 {
                     var worksheet = package.Workbook.Worksheets[0];
-                    var startRow = 2;
+                    var headerRow = FindHeaderRow(worksheet, new[] { "رقم القيد", "التاريخ", "مدين", "دائن", "الحساب" });
+                    var columns = GetHeaderColumns(worksheet, headerRow);
+                    var startRow = headerRow + 1;
 
                     for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                     {
                         journalLines.Add(new QoyodJournalLine
                         {
-                            JournalNumber = worksheet.Cells[row, 3].Text,
-                            JournalDate = DateTime.Parse(worksheet.Cells[row, 4].Text),
-                            Notes = worksheet.Cells[row, 5].Text,
-                            ReferenceNumber = worksheet.Cells[row, 6].Text,
-                            Description = worksheet.Cells[row, 7].Text,
-                            Debit = decimal.Parse(worksheet.Cells[row, 8].Text),
-                            Credit = decimal.Parse(worksheet.Cells[row, 9].Text),
-                            Account = worksheet.Cells[row, 10].Text,
-                            Currency = worksheet.Cells[row, 14].Text
+                            JournalNumber = worksheet.Cells[row, columns["رقم القيد"]].Text,
+                            JournalDate = DateTime.Parse(worksheet.Cells[row, columns["التاريخ"]].Text),
+                            Notes = worksheet.Cells[row, columns["الملاحظات"]].Text,
+                            ReferenceNumber = worksheet.Cells[row, columns["رقم المرجع"]].Text,
+                            Description = worksheet.Cells[row, columns["البيان"]].Text,
+                            Debit = decimal.Parse(worksheet.Cells[row, columns["مدين"]].Text),
+                            Credit = decimal.Parse(worksheet.Cells[row, columns["دائن"]].Text),
+                            Account = worksheet.Cells[row, columns["الحساب"]].Text,
+                            Currency = worksheet.Cells[row, columns["العملة"]].Text
                         });
                     }
                 }
@@ -106,20 +111,22 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 6;
+                var headerRow = FindHeaderRow(worksheet, new[] { "التاريخ", "اسم الحساب", "نوع الحركة", "رقم القيد", "دائن" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
-                    var transactionType = worksheet.Cells[row, 3].Text;
+                    var transactionType = worksheet.Cells[row, columns["نوع الحركة"]].Text;
                     if (transactionType == "فاتورة مبيعات")
                     {
                         transactions.Add(new QoyodInvoiceTransaction
                         {
-                            InvoiceDate = DateTime.Parse(worksheet.Cells[row, 1].Text),
-                            AccountName = worksheet.Cells[row, 2].Text,
-                            Description = worksheet.Cells[row, 4].Text,
-                            InvoiceNumber = worksheet.Cells[row, 5].Text,
-                            TotalAmount = decimal.Parse(worksheet.Cells[row, 7].Text)
+                            InvoiceDate = DateTime.Parse(worksheet.Cells[row, columns["التاريخ"]].Text),
+                            AccountName = worksheet.Cells[row, columns["اسم الحساب"]].Text,
+                            Description = worksheet.Cells[row, columns["البيان"]].Text,
+                            InvoiceNumber = worksheet.Cells[row, columns["رقم القيد"]].Text,
+                            TotalAmount = decimal.Parse(worksheet.Cells[row, columns["دائن"]].Text)
                         });
                     }
                 }
@@ -140,20 +147,22 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 3;
+                var headerRow = FindHeaderRow(worksheet, new[] { "التاريخ", "جهة الاتصال", "نوع الحركة", "رقم الفاتورة", "دائن", "offset_account_id" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
-                    var transactionType = worksheet.Cells[row, 8].Text;
+                    var transactionType = worksheet.Cells[row, columns["نوع الحركة"]].Text;
                     if (transactionType == "customer_payment")
                     {
                         transactions.Add(new QoyodPaymentTransaction
                         {
-                            PaymentDate = DateTime.Parse(worksheet.Cells[row, 1].Text),
-                            CustomerName = worksheet.Cells[row, 3].Text,
-                            InvoiceNumber = worksheet.Cells[row, 10].Text,
-                            Amount = decimal.Parse(worksheet.Cells[row, 12].Text),
-                            PaymentAccountNumber = worksheet.Cells[row, 6].Text
+                            PaymentDate = DateTime.Parse(worksheet.Cells[row, columns["التاريخ"]].Text),
+                            CustomerName = worksheet.Cells[row, columns["جهة الاتصال"]].Text,
+                            InvoiceNumber = worksheet.Cells[row, columns["رقم الفاتورة"]].Text,
+                            Amount = decimal.Parse(worksheet.Cells[row, columns["دائن"]].Text),
+                            PaymentAccountNumber = worksheet.Cells[row, columns["offset_account_id"]].Text
                         });
                     }
                 }
@@ -174,20 +183,22 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 3;
+                var headerRow = FindHeaderRow(worksheet, new[] { "التاريخ", "اسم الحساب", "نوع الحركة", "المرجع", "دائن" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
-                    var transactionType = worksheet.Cells[row, 8].Text;
+                    var transactionType = worksheet.Cells[row, columns["نوع الحركة"]].Text;
                     if (transactionType == "bill")
                     {
                         transactions.Add(new QoyodBillTransaction
                         {
-                            BillDate = DateTime.Parse(worksheet.Cells[row, 1].Text),
-                            AccountName = worksheet.Cells[row, 2].Text,
-                            Description = worksheet.Cells[row, 3].Text,
-                            BillNumber = worksheet.Cells[row, 10].Text,
-                            TotalAmount = decimal.Parse(worksheet.Cells[row, 12].Text)
+                            BillDate = DateTime.Parse(worksheet.Cells[row, columns["التاريخ"]].Text),
+                            AccountName = worksheet.Cells[row, columns["اسم الحساب"]].Text,
+                            Description = worksheet.Cells[row, columns["البيان"]].Text,
+                            BillNumber = worksheet.Cells[row, columns["المرجع"]].Text,
+                            TotalAmount = decimal.Parse(worksheet.Cells[row, columns["دائن"]].Text)
                         });
                     }
                 }
@@ -205,17 +216,19 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 2;
+                var headerRow = FindHeaderRow(worksheet, new[] { "التاريخ", "رقم القيد", "تاريخ الفاتورة", "رقم الفاتورة", "المبلغ" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
                     records.Add(new QoyodJournalCreditAppliedInvoice
                     {
-                        Date = GetNullableDateTime(worksheet.Cells[row, 1].Text),
-                        JournalNumber = worksheet.Cells[row, 2].Text,
-                        InvoiceDate = GetNullableDateTime(worksheet.Cells[row, 3].Text),
-                        InvoiceNumber = worksheet.Cells[row, 4].Text,
-                        Amount = decimal.Parse(worksheet.Cells[row, 5].Text)
+                        Date = GetNullableDateTime(worksheet.Cells[row, columns["التاريخ"]].Text),
+                        JournalNumber = worksheet.Cells[row, columns["رقم القيد"]].Text,
+                        InvoiceDate = GetNullableDateTime(worksheet.Cells[row, columns["تاريخ الفاتورة"]].Text),
+                        InvoiceNumber = worksheet.Cells[row, columns["رقم الفاتورة"]].Text,
+                        Amount = decimal.Parse(worksheet.Cells[row, columns["المبلغ"]].Text)
                     });
                 }
             }
@@ -239,21 +252,56 @@ namespace QoyodZohoConverter.Core.Services
             using (var package = new ExcelPackage(fileInfo))
             {
                 var worksheet = package.Workbook.Worksheets[0];
-                var startRow = 2;
+                var headerRow = FindHeaderRow(worksheet, new[] { "التاريخ", "رقم القيد", "تاريخ الفاتورة", "رقم الفاتورة", "المبلغ" });
+                var columns = GetHeaderColumns(worksheet, headerRow);
+                var startRow = headerRow + 1;
 
                 for (int row = startRow; row <= worksheet.Dimension.End.Row; row++)
                 {
                     records.Add(new QoyodJournalCreditAppliedBill
                     {
-                        Date = GetNullableDateTime(worksheet.Cells[row, 1].Text),
-                        JournalNumber = worksheet.Cells[row, 2].Text,
-                        BillDate = GetNullableDateTime(worksheet.Cells[row, 3].Text),
-                        BillNumber = worksheet.Cells[row, 4].Text,
-                        Amount = decimal.Parse(worksheet.Cells[row, 5].Text)
+                        Date = GetNullableDateTime(worksheet.Cells[row, columns["التاريخ"]].Text),
+                        JournalNumber = worksheet.Cells[row, columns["رقم القيد"]].Text,
+                        BillDate = GetNullableDateTime(worksheet.Cells[row, columns["تاريخ الفاتورة"]].Text),
+                        BillNumber = worksheet.Cells[row, columns["رقم الفاتورة"]].Text,
+                        Amount = decimal.Parse(worksheet.Cells[row, columns["المبلغ"]].Text)
                     });
                 }
             }
             return records;
+        }
+
+        private int FindHeaderRow(ExcelWorksheet worksheet, string[] expectedHeaders)
+        {
+            for (int row = 1; row <= 20 && row <= worksheet.Dimension.End.Row; row++)
+            {
+                var headerCells = new List<string>();
+                for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
+                {
+                    headerCells.Add(worksheet.Cells[row, col].Text?.Trim());
+                }
+
+                bool allHeadersFound = expectedHeaders.All(header => headerCells.Contains(header, StringComparer.OrdinalIgnoreCase));
+                if (allHeadersFound)
+                {
+                    return row;
+                }
+            }
+            throw new InvalidOperationException($"Could not find the expected header row in the worksheet. Expected headers: {string.Join(", ", expectedHeaders)}");
+        }
+
+        private Dictionary<string, int> GetHeaderColumns(ExcelWorksheet worksheet, int headerRow)
+        {
+            var columns = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
+            {
+                var header = worksheet.Cells[headerRow, col].Text?.Trim();
+                if (!string.IsNullOrEmpty(header) && !columns.ContainsKey(header))
+                {
+                    columns[header] = col;
+                }
+            }
+            return columns;
         }
     }
 }
